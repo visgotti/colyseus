@@ -1,5 +1,5 @@
 import * as msgpack from "msgpack-lite";
-import * as fossilDelta from "fossil-delta";
+import * as fossilDelta from "node-delta";
 import * as shortid from "shortid";
 
 import Timer from "@gamestdio/timer";
