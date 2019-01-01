@@ -5,6 +5,7 @@ import * as WebSocket from 'ws';
 import { ServerOptions as IServerOptions } from 'ws';
 
 import { debugAndPrintError, debugError } from './Debug';
+import { AreaMatchMaker, AreaMatchHandlers } from './AreaMatchMaker';
 import { MatchMaker, REMOTE_ROOM_LARGE_TIMEOUT } from './MatchMaker';
 import { RegisteredHandler } from './matchmaker/RegisteredHandler';
 import { Presence } from './presence/Presence';
@@ -13,6 +14,9 @@ import { MatchMakeError } from './Errors';
 import { Client, generateId, isValidId } from './index';
 import { decode, Protocol, send } from './Protocol';
 import { RoomConstructor } from './Room';
+import { AreaConstructor } from './area/Area';
+import { ConnectorConstructor } from './area/Connector';
+
 import { parseQueryString, registerGracefulShutdown, retry } from './Utils';
 
 function noop() {/* tslint:disable:no-empty */}
@@ -29,6 +33,7 @@ export type ServerOptions = IServerOptions & {
 
 export class Server {
   public matchMaker: MatchMaker;
+  public areaMatchMaker: AreaMatchMaker;
 
   protected server: WebSocket.Server;
   protected httpServer: net.Server | http.Server;
@@ -42,6 +47,7 @@ export class Server {
 
     this.presence = options.presence;
     this.matchMaker = new MatchMaker(this.presence);
+    this.areaMatchMaker = new AreaMatchMaker(this.presence);
     this.pingTimeout = (options.pingTimeout !== undefined)
       ? options.pingTimeout
       : 1500;
@@ -95,6 +101,10 @@ export class Server {
 
   public async register(name: string, handler: RoomConstructor, options: any = {}): Promise<RegisteredHandler> {
     return this.matchMaker.registerHandler(name, handler, options);
+  }
+
+  public async registerWithAreas(name: string, connectorHandler: ConnectorConstructor, areaHandler: AreaConstructor,  options: any = {}): Promise<AreaMatchHandlers>  {
+    return this.areaMatchMaker.registerHandler(name, connectorHandler, areaHandler, options)
   }
 
   public gracefullyShutdown(exit: boolean = true) {
